@@ -13,7 +13,8 @@ class StatusCode:
     UNAUTHORIZED: Code = Code(code=401, message="Unauthorized")
     FORBIDDEN: Code = Code(code=403, message="Forbidden")
     BAD_REQUEST: Code = Code(code=400, message="Bad Request")
-    INTERNAL_SERVER_ERROR: Code = Code(code=500, message="Internal Server Error")
+    INTERNAL_SERVER_ERROR: Code = Code(
+        code=500, message="Internal Server Error")
     SERVICE_UNAVAILABLE: Code = Code(code=503, message="Service Unavailable")
     GATEWAY_TIMEOUT: Code = Code(code=504, message="Gateway Timeout")
     CONFLICT: Code = Code(code=409, message="Conflict")
@@ -32,7 +33,8 @@ class StatusCode:
             code (int): The status code to retrieve the message for.
 
         Returns:
-            str: The message associated with the status code, or "Unknown Status Code" if not found.
+            str: The message associated with the status code, 
+            or "Unknown Status Code" if not found.
         """
         for attr in cls.__annotations__.keys():
             if getattr(cls, attr)["code"] == code:

@@ -4,6 +4,8 @@ from app.database.session import get_db
 import app.services.user
 import app.schemas.user
 from uuid import UUID
+from app.common.exceptions import BusinessException
+from app.constants.business_code import BusinessCode
 
 router = APIRouter(prefix="/users", tags=["Users"])
 
@@ -17,7 +19,10 @@ def get_all_users(db: Session = Depends(get_db)):
 def get_user_by_id(user_id: UUID, db: Session = Depends(get_db)):
     user = app.services.user.get_user_by_id_service(db, user_id)
     if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+        raise BusinessException(
+            BusinessCode.USER_NOT_FOUND["code"],
+            BusinessCode.USER_NOT_FOUND["message"],
+            )
     return user
 
 
@@ -31,8 +36,8 @@ def create_user(
 
 @router.put("/{user_id}", response_model=app.schemas.user.UserOut)
 def update_user(
-    user_id: UUID, 
-    user_in: app.schemas.user.UserUpdate, 
+    user_id: UUID,
+    user_in: app.schemas.user.UserUpdate,
     db: Session = Depends(get_db)
 ):
     user = app.services.user.update_user_service(db, user_id, user_in)

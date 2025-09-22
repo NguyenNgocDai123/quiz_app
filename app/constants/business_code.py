@@ -7,6 +7,8 @@ class Code(TypedDict):
 
 
 class BusinessCode:
+
+    SUCCESS: Code = Code(code=0, message="success")
     #  Auth
     LOGIN_SUCCESS: Code = Code(code=1, message="Login success")
     REGISTER_SUCCESS: Code = Code(code=2, message="Register success")
@@ -27,9 +29,11 @@ class BusinessCode:
 
     #  Group
     GROUP_NOT_FOUND: Code = Code(code=2001, message="Group not found")
-    GROUP_ALREADY_EXISTS: Code = Code(code=2002, message="Group already exists")
+    GROUP_ALREADY_EXISTS: Code = Code(
+        code=2002, message="Group already exists")
     GROUP_NOT_ACTIVE: Code = Code(code=2003, message="Group not active")
-    GROUP_NOT_AUTHORIZED: Code = Code(code=2004, message="Group not authorized")
+    GROUP_NOT_AUTHORIZED: Code = Code(
+        code=2004, message="Group not authorized")
 
     # Folder
     FOLDER_NOT_FOUND: Code = Code(code=3001, message="Folder not found")
@@ -83,21 +87,25 @@ class BusinessCode:
     )
     DOCUMENT_ALREADY_EXISTS: Code = Code(code=6101,
                                          message="Document already exists")
-    DOCUMENT_NOT_ACCESS: Code = Code(code=6102, 
+    DOCUMENT_NOT_ACCESS: Code = Code(code=6102,
                                      message="Document not accessible")
     DOCUMENT_NOT_ACTIVE: Code = Code(code=6103,
                                      message="Document not active")
-    DOCUMENT_NOT_AUTHORIZED: Code = Code(code=6104, message="Document not authorized")
+    DOCUMENT_NOT_AUTHORIZED: Code = Code(
+        code=6104, message="Document not authorized")
 
     # Image
     IMAGE_NOT_FOUND: Code = Code(code=6501, message="Image not found")
 
     #  Conversation
-    CONVERSATION_NOT_FOUND: Code = Code(code=7001, message="Conversation not found")
+    CONVERSATION_NOT_FOUND: Code = Code(
+        code=7001, message="Conversation not found")
 
     #  Token History
-    TOKEN_HISTORY_NOT_FOUND: Code = Code(code=8001, message="Token history not found")
-    DATA_NOT_FOUND: Code = Code(code=8002, message="Token history data not found")
+    TOKEN_HISTORY_NOT_FOUND: Code = Code(
+        code=8001, message="Token history not found")
+    DATA_NOT_FOUND: Code = Code(
+        code=8002, message="Token history data not found")
 
     #  Message History
     MESSAGE_HISTORY_NOT_FOUND: Code = Code(
@@ -123,7 +131,8 @@ class BusinessCode:
             code (int): The business code to retrieve the message for.
 
         Returns:
-            str: The message associated with the business code, or "Unknown Business Code" if not found.
+            str: The message associated with the business code,
+            or "Unknown Business Code" if not found.
         """
         for attr in cls.__annotations__.keys():
             if getattr(cls, attr)["code"] == code:
