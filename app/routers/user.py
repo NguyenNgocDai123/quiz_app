@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from app.database.session import get_db
 import app.services.user
@@ -6,13 +6,21 @@ import app.schemas.user
 from uuid import UUID
 from app.common.exceptions import BusinessException
 from app.constants.business_code import BusinessCode
+from app.common.pagination import PaginationResponse
+
 
 router = APIRouter(prefix="/users", tags=["Users"])
 
 
-@router.get("/", response_model=list[app.schemas.user.UserOut])
-def get_all_users(db: Session = Depends(get_db)):
-    return app.services.user.get_all_users_service(db)
+@router.get("/", response_model=PaginationResponse[app.schemas.user.UserOut])
+def get_all_users(
+    page: int = Query(1, ge=1, description="Page number"),
+    page_size: int = Query(
+        10, ge=1, le=100, description="Number of items per page"),
+    db: Session = Depends(get_db)
+):
+    return app.services.user.get_all_users_service(
+        db, page=page, page_size=page_size)
 
 
 @router.get("/{user_id}", response_model=app.schemas.user.UserOut)

@@ -9,39 +9,51 @@ from app.constants.business_code import BusinessCode
 
 class ResponseWrapperMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
+        # Bỏ qua swagger / openapi / redoc
+        if request.url.path.startswith(("/docs", "/openapi.json", "/redoc")):
+            return await call_next(request)
+
         response = await call_next(request)
 
         # Bỏ qua các response đặc biệt
-        if isinstance(response,
-                      (FileResponse, StreamingResponse, HTMLResponse)):
+        if isinstance(response, (FileResponse, StreamingResponse, HTMLResponse)):
             return response
 
-        # Đọc body gốc
-        body = b"".join([chunk async for chunk in response.body_iterator])
-        response.body_iterator = None
+        # Chỉ wrap JSON
+        content_type = response.headers.get("content-type", "")
+        if "application/json" not in content_type.lower():
+            return response
 
+        # Lấy dữ liệu từ response cũ
         try:
-            data = json.loads(body.decode())
+            if hasattr(response, "body") and response.body:
+                data = json.loads(response.body.decode())
+            else:
+                # fallback nếu response chưa có body attribute
+                body_bytes = b"".join([chunk async for chunk in response.body_iterator])
+                data = json.loads(body_bytes.decode()) if body_bytes else None
         except Exception:
-            data = body.decode() if body else None
+            data = None
 
-        # Nếu đã đúng format chuẩn thì trả về luôn
-        if isinstance(data, dict) and {"business_code",
-                                       "status_code",
-                                       "message", "data"} <= data.keys():
-            response.body_iterator = iter([body])
-            return response
+        # Nếu đã có business_code → tạo response mới giữ nguyên
+        if isinstance(data, dict) and "business_code" in data:
+            return BusinessJsonResponse(
+                business_code=data.get("business_code", BusinessCode.SUCCESS["code"]),
+                content=data,
+                status_code=response.status_code
+            )
 
-        # Nếu chưa chuẩn → bọc lại
+        # Nếu chưa chuẩn → wrap lại với SUCCESS
         wrapped = AppResponseModel(
-            business_code=BusinessCode.SUCCESS,
+            business_code=BusinessCode.SUCCESS["code"],
             status_code=response.status_code,
-            message="OK",
+            message=BusinessCode.SUCCESS["message"],
             data=data,
         ).model_dump()
 
+        # Luôn tạo response mới → không còn Content-Length mismatch
         return BusinessJsonResponse(
-            business_code=BusinessCode.SUCCESS,
+            business_code=wrapped["business_code"],
             content=wrapped,
             status_code=response.status_code,
         )

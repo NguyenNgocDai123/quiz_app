@@ -32,6 +32,7 @@ class AppUser(Base):
     password = Column(String(255), nullable=False)
     role = Column(PgEnum(RoleEnum), nullable=False, default=RoleEnum.USER)
     created_at = Column(TIMESTAMP, default=datetime.utcnow, nullable=False)
+    is_active = Column(Boolean, default=True)
 
     courses = relationship("Course", back_populates="teacher")
     enrollments = relationship("CourseEnrollment", back_populates="user")

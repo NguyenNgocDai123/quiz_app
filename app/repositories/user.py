@@ -4,7 +4,8 @@ from uuid import UUID
 
 
 def get_all_users(db: Session):
-    return db.query(AppUser).all()
+    # Trả về query, chưa gọi .all()
+    return db.query(AppUser)
 
 
 def get_user_by_id(db: Session, user_id: UUID):

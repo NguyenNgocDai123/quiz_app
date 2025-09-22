@@ -3,11 +3,26 @@ from uuid import UUID
 from app.models.models import AppUser
 import app.repositories.user
 import app.schemas.user
-import hashlib
+from passlib.context import CryptContext
+
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
-def get_all_users_service(db: Session):
-    return app.repositories.user.get_all_users(db)
+def get_all_users_service(db: Session, page: int = 1, page_size: int = 10):
+    query = app.repositories.user.get_all_users(db)
+    total_items = query.count()
+    total_page = (total_items + page_size - 1) // page_size
+    offset = (page - 1) * page_size
+    items = query.offset(offset).limit(page_size).all()
+
+    return {
+        "page": page,
+        "page_size": page_size,
+        "total_page": total_page,
+        "total_items": total_items,
+        "next": page + 1 if page < total_page else None,
+        "data": items
+    }
 
 
 def get_user_by_id_service(db: Session, user_id: UUID):
@@ -15,26 +30,31 @@ def get_user_by_id_service(db: Session, user_id: UUID):
 
 
 def create_user_service(db: Session, user_in: app.schemas.user.UserCreate):
-    hashed_pw = hashlib.sha256(user_in.password.encode()).hexdigest()
+    # Hash password với bcrypt
+    hashed_pw = pwd_context.hash(user_in.password)
+    
     user = AppUser(
         full_name=user_in.full_name,
         email=user_in.email,
-        password=hashed_pw,
+        password=hashed_pw,  # lưu vào cột password_hash
+        is_active=True
     )
     return app.repositories.user.create_user(db, user)
 
 
 def update_user_service(
-        db: Session, user_id: UUID,
-        user_in: app.schemas.user.UserUpdate):
-
+    db: Session, user_id: UUID, user_in: app.schemas.user.UserUpdate
+):
     db_user = app.repositories.user.get_user_by_id(db, user_id)
     if not db_user:
         return None
+
     updates = user_in.dict(exclude_unset=True)
+
+    # Nếu có cập nhật password, hash bcrypt
     if "password" in updates:
-        updates["password"] = hashlib.sha256(
-            updates["password"].encode()).hexdigest()
+        updates["password"] = pwd_context.hash(updates.pop("password"))
+
     return app.repositories.user.update_user(db, db_user, updates)
 
 
