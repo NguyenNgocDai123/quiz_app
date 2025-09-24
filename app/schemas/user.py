@@ -8,13 +8,14 @@ from app.constants.enums.roles import RoleEnum
 class UserBase(BaseModel):
     full_name: str
     email: EmailStr
+    role: Optional[RoleEnum]
 
 
 class UserCreate(UserBase):
     full_name: str
     email: EmailStr
     password: str
-    role: Optional[RoleEnum] = RoleEnum.USER
+    role: Optional[RoleEnum]
 
 
 class UserUpdate(BaseModel):

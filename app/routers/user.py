@@ -7,6 +7,8 @@ from uuid import UUID
 from app.common.exceptions import BusinessException
 from app.constants.business_code import BusinessCode
 from app.common.pagination import PaginationResponse
+from app.dependencies.dependencies import get_current_user
+from app.models.models import AppUser
 
 
 router = APIRouter(prefix="/users", tags=["Users"])
@@ -17,14 +19,18 @@ def get_all_users(
     page: int = Query(1, ge=1, description="Page number"),
     page_size: int = Query(
         10, ge=1, le=100, description="Number of items per page"),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    _: AppUser = Depends(get_current_user)
 ):
     return app.services.user.get_all_users_service(
         db, page=page, page_size=page_size)
 
 
 @router.get("/{user_id}", response_model=app.schemas.user.UserOut)
-def get_user_by_id(user_id: UUID, db: Session = Depends(get_db)):
+def get_user_by_id(
+    user_id: UUID, db: Session = Depends(get_db),
+    _: AppUser = Depends(get_current_user)
+):
     user = app.services.user.get_user_by_id_service(db, user_id)
     if not user:
         raise BusinessException(
@@ -37,7 +43,8 @@ def get_user_by_id(user_id: UUID, db: Session = Depends(get_db)):
 @router.post("/", response_model=app.schemas.user.UserOut)
 def create_user(
     user_in: app.schemas.user.UserCreate,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    _: AppUser = Depends(get_current_user)
 ):
     return app.services.user.create_user_service(db, user_in)
 
@@ -46,7 +53,8 @@ def create_user(
 def update_user(
     user_id: UUID,
     user_in: app.schemas.user.UserUpdate,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    _: AppUser = Depends(get_current_user)
 ):
     user = app.services.user.update_user_service(db, user_id, user_in)
     if not user:
@@ -55,7 +63,10 @@ def update_user(
 
 
 @router.delete("/{user_id}", response_model=app.schemas.user.UserOut)
-def delete_user(user_id: UUID, db: Session = Depends(get_db)):
+def delete_user(
+    user_id: UUID, db: Session = Depends(get_db),
+    _: AppUser = Depends(get_current_user)
+):
     user = app.services.user.delete_user_service(db, user_id)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")

@@ -37,7 +37,8 @@ def create_user_service(db: Session, user_in: app.schemas.user.UserCreate):
         full_name=user_in.full_name,
         email=user_in.email,
         password=hashed_pw,  # lưu vào cột password_hash
-        is_active=True
+        is_active=True,
+        role=user_in.role
     )
     return app.repositories.user.create_user(db, user)
 

@@ -1,14 +1,17 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from app.schemas.auth import LoginRequest, TokenResponse, RefreshTokenRequest
+from app.schemas.auth import (
+    LoginRequest,
+    TokenResponse,
+    RefreshTokenRequest,
+    LogoutRequest,
+)
 from app.database.session import get_db
-from app.services.auth import login_service, refresh_token_service, logout_service
-from fastapi.security import OAuth2PasswordBearer
-from fastapi import Header
+from app.services.auth import (
+    login_service, refresh_token_service, logout_service)
+from app.core.jwt import decode_token
 
 router = APIRouter()
-
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 
 @router.post("/login", response_model=TokenResponse)
@@ -22,11 +25,24 @@ def refresh(payload: RefreshTokenRequest, db: Session = Depends(get_db)):
 
 
 @router.post("/logout")
-def logout(authorization: str = Header(...), db: Session = Depends(get_db)):
-    # authorization = "Bearer <access_token>"
-    token = authorization.split(" ")[1]
-    from app.core.jwt import decode_token
-    payload = decode_token(token)
+def logout(payload: LogoutRequest, db: Session = Depends(get_db)):
+    """
+    Truyền access_token trong body request.
+    Ví dụ body JSON:
+    {
+        "access_token": "<token_here>"
+    }
+    """
+    token = payload.access_token
+
+    try:
+        payload = decode_token(token)
+    except Exception:
+        raise HTTPException(status_code=401, detail="Invalid or expired token")
+
     user_id = payload.get("sub")
+    if not user_id:
+        raise HTTPException(status_code=401, detail="Invalid token payload")
+
     logout_service(db, user_id)
     return {"message": "Logged out successfully"}
