@@ -1,9 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from uuid import UUID
+from typing import List
 
 from app.database.session import get_db
-from app.schemas.quiz import QuizCreate, QuizUpdate, QuizResponse
+from app.schemas.quiz import (
+    QuizCreate, QuizUpdate, QuizResponse, QuestionCreate, QuestionResponse)
 from app.services import quiz as quiz_service
 from app.dependencies.dependencies import get_current_user
 from app.models.models import AppUser
@@ -59,6 +61,24 @@ def create_quiz(
         raise HTTPException(status_code=403,
                             detail="Only teachers have the right to create")
     return quiz_service.create_quiz(db, quiz_in, current_user.id)
+
+
+@router.post("/{quiz_id}/questions", response_model=List[QuestionResponse])
+def add_questions(
+    quiz_id: UUID,
+    questions: List[QuestionCreate],
+    db: Session = Depends(get_db),
+    current_user: AppUser = Depends(get_current_user),
+):
+    """
+    Thêm nhiều câu hỏi vào quiz.
+    Chỉ giáo viên mới có quyền.
+    """
+    if current_user.role != RoleEnum.TEACHER:
+        raise HTTPException(status_code=403,
+                            detail="Only teachers can add questions")
+
+    return quiz_service.add_questions_to_quiz(db, quiz_id, questions)
 
 
 @router.put("/{quiz_id}", response_model=QuizResponse)

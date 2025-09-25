@@ -1,8 +1,8 @@
-"""add init table
+"""init tables
 
-Revision ID: 1302ac5b212d
+Revision ID: 45057f5761e7
 Revises: 
-Create Date: 2025-09-22 09:57:52.568809
+Create Date: 2025-09-25 13:36:39.136262
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '1302ac5b212d'
+revision: str = '45057f5761e7'
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -28,6 +28,7 @@ def upgrade() -> None:
     sa.Column('password', sa.String(length=255), nullable=False),
     sa.Column('role', sa.Enum('ADMIN', 'USER', 'TEACHER', name='roleenum'), nullable=False),
     sa.Column('created_at', sa.TIMESTAMP(), nullable=False),
+    sa.Column('is_active', sa.Boolean(), nullable=True),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('email')
     )
@@ -81,7 +82,7 @@ def upgrade() -> None:
     sa.Column('id', sa.UUID(), nullable=False),
     sa.Column('quiz_id', sa.UUID(), nullable=False),
     sa.Column('content', sa.Text(), nullable=False),
-    sa.Column('type', sa.Enum('multiple_choice', 'true_false', name='questiontype'), nullable=False),
+    sa.Column('type', sa.Enum('MULTIPLE_CHOICE', 'TRUE_FALSE', 'SINGLE_CHOICE', name='questiontype'), nullable=False),
     sa.Column('points', sa.Integer(), nullable=False),
     sa.ForeignKeyConstraint(['quiz_id'], ['course_quizzes.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id')

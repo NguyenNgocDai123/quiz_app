@@ -1,7 +1,9 @@
 from sqlalchemy.orm import Session
 from uuid import UUID
-from app.models.models import CourseQuiz
-from app.schemas.quiz import QuizCreate, QuizUpdate
+from app.models.models import CourseQuiz, QuizQuestion, QuestionOption
+from app.schemas.quiz import QuizCreate, QuizUpdate, QuestionCreate
+from typing import List
+import uuid
 
 
 def create_quiz(db: Session, quiz_in: QuizCreate, teacher_id: UUID):
@@ -17,8 +19,39 @@ def create_quiz(db: Session, quiz_in: QuizCreate, teacher_id: UUID):
     )
     db.add(quiz)
     db.commit()
-    db.refresh(quiz)   # cần dòng này
+    db.refresh(quiz)  # cần dòng này
     return quiz
+
+
+def add_questions_to_quiz(
+    db: Session, quiz_id: UUID,
+    questions: List[QuestionCreate]
+):
+    created_questions = []
+    for q in questions:
+        question = QuizQuestion(
+            id=uuid.uuid4(),
+            quiz_id=quiz_id,
+            content=q.content,
+            type=q.type,
+            points=q.points,
+        )
+        db.add(question)
+        db.flush()
+
+        for opt in q.options:
+            option = QuestionOption(
+                id=uuid.uuid4(),
+                question_id=question.id,
+                content=opt.content,
+                is_correct=opt.is_correct,
+            )
+            db.add(option)
+
+        created_questions.append(question)
+
+    db.commit()
+    return created_questions
 
 
 def get_quiz(db: Session, quiz_id: UUID) -> CourseQuiz | None:
@@ -30,7 +63,10 @@ def list_quizzes(db: Session, course_id: UUID) -> list[CourseQuiz]:
 
 
 def update_quiz(
-        db: Session, quiz: CourseQuiz, quiz_in: QuizUpdate) -> CourseQuiz:
+    db: Session,
+    quiz: CourseQuiz,
+    quiz_in: QuizUpdate
+) -> CourseQuiz:
     for field, value in quiz_in.dict(exclude_unset=True).items():
         setattr(quiz, field, value)
     db.commit()

@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, List
 from uuid import UUID
 from datetime import datetime
 
@@ -34,3 +34,23 @@ class QuizResponse(QuizBase):
 
     class Config:
         from_attributes = True
+
+
+class QuestionOptionCreate(BaseModel):
+    content: str
+    is_correct: bool = False
+
+
+class QuestionCreate(BaseModel):
+    content: str
+    type: str = "single_choice"
+    points: int = 1
+    options: List[QuestionOptionCreate]
+
+
+class QuestionResponse(QuestionCreate):
+    id: UUID
+    options: List[QuestionOptionCreate]
+
+    class Config:
+        orm_mode = True

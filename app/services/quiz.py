@@ -2,12 +2,20 @@ from sqlalchemy.orm import Session
 from uuid import UUID
 
 from app.repositories import quiz as quiz_repository
-from app.schemas.quiz import QuizCreate, QuizUpdate
+from app.schemas.quiz import QuizCreate, QuizUpdate, QuestionCreate
+from typing import List
 from app.models.models import CourseQuiz
 
 
 def create_quiz(db: Session, quiz_in: QuizCreate, user_id: UUID) -> CourseQuiz:
     return quiz_repository.create_quiz(db, quiz_in, user_id)
+
+
+def add_questions_to_quiz(
+    db: Session, quiz_id: UUID, questions: List[QuestionCreate]
+):
+    # Ở đây có thể thêm logic validate quiz tồn tại
+    return quiz_repository.add_questions_to_quiz(db, quiz_id, questions)
 
 
 def get_quiz(db: Session, quiz_id: UUID) -> CourseQuiz:

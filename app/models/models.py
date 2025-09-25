@@ -1,6 +1,5 @@
 import uuid
 from datetime import datetime
-from enum import Enum
 from sqlalchemy import (
     Column,
     String,
@@ -15,11 +14,7 @@ from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from app.database.session import Base
 from app.constants.enums.roles import RoleEnum
-
-
-class QuestionType(str, Enum):
-    multiple_choice = "multiple_choice"
-    true_false = "true_false"
+from app.constants.enums.questionType import QuestionType
 
 
 # Users
@@ -62,8 +57,8 @@ class CourseEnrollment(Base):
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     course_id = Column(
-        UUID(as_uuid=True), ForeignKey(
-            "courses.id", ondelete="CASCADE"), nullable=False
+        UUID(as_uuid=True), ForeignKey("courses.id", ondelete="CASCADE"),
+        nullable=False
     )
     user_id = Column(
         UUID(as_uuid=True),
@@ -84,8 +79,8 @@ class CourseQuiz(Base):
     title = Column(String(255), nullable=False)
     description = Column(Text)
     course_id = Column(
-        UUID(as_uuid=True), ForeignKey(
-            "courses.id", ondelete="CASCADE"), nullable=False
+        UUID(as_uuid=True), ForeignKey("courses.id", ondelete="CASCADE"),
+        nullable=False
     )
     teacher_id = Column(
         UUID(as_uuid=True), ForeignKey("app_users.id", ondelete="SET NULL")
@@ -113,7 +108,10 @@ class QuizQuestion(Base):
         nullable=False,
     )
     content = Column(Text, nullable=False)
-    type = Column(PgEnum(QuestionType), nullable=False)
+    type = Column(
+        PgEnum(QuestionType), nullable=False,
+        default=QuestionType.SINGLE_CHOICE
+    )
     points = Column(Integer, nullable=False)
 
     quiz = relationship("CourseQuiz", back_populates="questions")
