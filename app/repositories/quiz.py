@@ -54,6 +54,13 @@ def add_questions_to_quiz(
     return created_questions
 
 
+def repo_get_questions(db: Session, quiz_id: UUID):
+    """
+    Trả về query object để service xử lý tiếp (phân trang).
+    """
+    return db.query(QuizQuestion).filter(QuizQuestion.quiz_id == quiz_id)
+
+
 def get_quiz(db: Session, quiz_id: UUID) -> CourseQuiz | None:
     return db.query(CourseQuiz).filter(CourseQuiz.id == quiz_id).first()
 

@@ -2,9 +2,12 @@ from sqlalchemy.orm import Session
 from uuid import UUID
 
 from app.repositories import quiz as quiz_repository
-from app.schemas.quiz import QuizCreate, QuizUpdate, QuestionCreate
+from app.schemas.quiz import (
+    QuizCreate, QuizUpdate, QuestionCreate, QuestionResponse
+)
 from typing import List
 from app.models.models import CourseQuiz
+from app.common.pagination import PaginationResponse
 
 
 def create_quiz(db: Session, quiz_in: QuizCreate, user_id: UUID) -> CourseQuiz:
@@ -34,6 +37,24 @@ def list_quizzes(
     offset = (page - 1) * page_size
     items = query.offset(offset).limit(page_size).all()
 
+    return {
+        "page": page,
+        "page_size": page_size,
+        "total_page": total_page,
+        "total_items": total_items,
+        "next": page + 1 if page < total_page else None,
+        "data": items
+    }
+
+
+def get_questions_by_quiz(
+    db: Session, quiz_id: UUID, page: int, page_size: int
+) -> PaginationResponse[QuestionResponse]:
+    query = quiz_repository.repo_get_questions(db, quiz_id)
+    total_items = query.count()
+    total_page = (total_items + page_size - 1) // page_size
+    offset = (page - 1) * page_size
+    items = query.offset(offset).limit(page_size).all()
     return {
         "page": page,
         "page_size": page_size,

@@ -48,6 +48,23 @@ def get_quiz(
     return quiz
 
 
+@router.get("/{quiz_id}/questions",
+            response_model=PaginationResponse[QuestionResponse])
+def get_questions_by_quiz(
+    quiz_id: UUID,
+    page: int = Query(1, ge=1, description="Page number"),
+    page_size: int = Query(10, ge=1, le=100, description="Items per page"),
+    db: Session = Depends(get_db),
+    _: AppUser = Depends(get_current_user),
+):
+    """
+    Lấy danh sách câu hỏi trong một quiz (có phân trang).
+    """
+    return quiz_service.get_questions_by_quiz(
+        db, quiz_id=quiz_id, page=page, page_size=page_size
+    )
+
+
 @router.post("/", response_model=QuizResponse)
 def create_quiz(
     quiz_in: QuizCreate,

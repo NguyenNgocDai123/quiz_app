@@ -1,6 +1,6 @@
 import pdfplumber
 from typing import List, Dict
-import app.constants.enums.questionType as QuestionType
+from app.constants.enums.questionType import QuestionType
 
 
 def parse_pdf_to_questions(file_path: str) -> List[Dict]:
@@ -53,7 +53,7 @@ def parse_pdf_to_questions(file_path: str) -> List[Dict]:
         questions.append(
             {
                 "content": question_content,
-                "type": QuestionType.SINGLE_CHOICE,
+                "type": QuestionType.SINGLE_CHOICE.value,
                 "points": 1,
                 "options": [
                     {"content": o["content"], "is_correct": o["is_correct"]}

@@ -1,8 +1,10 @@
-from fastapi import APIRouter, UploadFile, File, HTTPException
+from fastapi import APIRouter, UploadFile, File, HTTPException, Depends
 import shutil
 import uuid
 import os
 from app.utils.pdf_parser import parse_pdf_to_questions
+from app.dependencies.dependencies import get_current_user
+from app.models.models import AppUser
 
 router = APIRouter(prefix="/pdf", tags=["PDF Parser"])
 
@@ -11,7 +13,10 @@ os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 
 @router.post("/parse")
-async def parse_pdf(file: UploadFile = File(...)):
+async def parse_pdf(
+    file: UploadFile = File(...),
+    _: AppUser = Depends(get_current_user),
+):
     """
     Upload file PDF và parse ra danh sách câu hỏi JSON.
     """

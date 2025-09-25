@@ -2,6 +2,7 @@ from pydantic import BaseModel
 from typing import Optional, List
 from uuid import UUID
 from datetime import datetime
+from app.constants.enums.questionType import QuestionType
 
 
 class QuizBase(BaseModel):
@@ -37,13 +38,14 @@ class QuizResponse(QuizBase):
 
 
 class QuestionOptionCreate(BaseModel):
+    id: UUID
     content: str
     is_correct: bool = False
 
 
 class QuestionCreate(BaseModel):
     content: str
-    type: str = "single_choice"
+    type: str = QuestionType
     points: int = 1
     options: List[QuestionOptionCreate]
 
