@@ -32,7 +32,6 @@ def get_user_by_id_service(db: Session, user_id: UUID):
 def create_user_service(db: Session, user_in: app.schemas.user.UserCreate):
     # Hash password với bcrypt
     hashed_pw = pwd_context.hash(user_in.password)
-    
     user = AppUser(
         full_name=user_in.full_name,
         email=user_in.email,

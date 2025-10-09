@@ -1,4 +1,3 @@
-# app/schemas/course.py
 from pydantic import BaseModel
 from uuid import UUID
 from datetime import datetime
@@ -7,7 +6,7 @@ from typing import Optional
 
 class CourseBase(BaseModel):
     name: str
-    code: str
+    code: Optional[str] = None
     teacher_id: Optional[UUID] = None
 
 
@@ -24,6 +23,8 @@ class CourseUpdate(BaseModel):
 class CourseOut(CourseBase):
     id: UUID
     created_at: datetime
+    member_count: int
+    quiz_count: int
 
     class Config:
         orm_mode = True

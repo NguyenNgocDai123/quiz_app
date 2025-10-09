@@ -31,3 +31,15 @@ class UserOut(UserBase):
 
     class Config:
         orm_mode = True
+
+
+class UserResponse(BaseModel):
+    id: UUID
+    full_name: str
+    email: EmailStr
+    role: RoleEnum
+    created_at: datetime
+    is_active: bool
+
+    class Config:
+        orm_mode = True

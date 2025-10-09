@@ -26,6 +26,22 @@ def get_all_users(
         db, page=page, page_size=page_size)
 
 
+@router.get("/me", response_model=app.schemas.user.UserResponse)
+def get_my_info(
+    current_user: AppUser = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    user = app.services.user.get_user_by_id_service(
+        db, user_id=current_user.id
+    )
+    if not user:
+        raise BusinessException(
+            BusinessCode.USER_NOT_FOUND["code"],
+            BusinessCode.USER_NOT_FOUND["message"],
+            )
+    return user
+
+
 @router.get("/{user_id}", response_model=app.schemas.user.UserOut)
 def get_user_by_id(
     user_id: UUID, db: Session = Depends(get_db),

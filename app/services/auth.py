@@ -15,21 +15,45 @@ def verify_password(plain_password, hashed_password):
 
 
 def login_service(db: Session, full_name: str, password: str):
+    """
+    Xác thực người dùng và sinh access/refresh token.
+
+    Args:
+        db (Session): SQLAlchemy session.
+        full_name (str): Tên đầy đủ của người dùng (hoặc username).
+        password (str): Mật khẩu người dùng.
+
+    Returns:
+        dict: access_token, refresh_token, token_type
+    """
+
+    # 🔹 1. Lấy thông tin người dùng
     user = db.query(AppUser).filter(AppUser.full_name == full_name).first()
     if not user:
-        raise BusinessException(BusinessCode.USER_NOT_FOUND["code"])
+        raise BusinessException(BusinessCode.USER_NOT_FOUND["code"], "User not found")
+
+    # 🔹 2. Kiểm tra trạng thái
     if not user.is_active:
-        raise BusinessException(BusinessCode.USER_NOT_ACTIVE["code"])
+        raise BusinessException(BusinessCode.USER_NOT_ACTIVE["code"], "User not active")
+
+    # 🔹 3. Xác thực mật khẩu
     if not verify_password(password, user.password):
-        raise BusinessException(BusinessCode.USER_PASSWORD_INCORRECT["code"])
+        raise BusinessException(
+            BusinessCode.USER_PASSWORD_INCORRECT["code"], "Incorrect password"
+        )
 
-    access_token = create_access_token({"sub": str(user.id)})
-    refresh_token = create_refresh_token({"sub": str(user.id)})
+    # 🔹 4. Sinh token (sử dụng UUID của user.id)
+    user_id_str = str(user.id)  # UUID → str
+    access_token = create_access_token({"sub": user_id_str})
+    refresh_token = create_refresh_token({"sub": user_id_str})
 
-    # Lưu refresh token vào DB hoặc cache (optional)
+    # 🔹 5. Lưu refresh token (tùy chọn)
     user.refresh_token = refresh_token
+    db.add(user)
     db.commit()
+    db.refresh(user)
 
+    # 🔹 6. Trả kết quả
     return {
         "access_token": access_token,
         "refresh_token": refresh_token,
