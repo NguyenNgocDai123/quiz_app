@@ -15,21 +15,28 @@ from app.models.models import RoleEnum
 router = APIRouter(prefix="/quizzes", tags=["Quizzes"])
 
 
-@router.get("/course/{course_id}",
+@router.get("/course/{course_id}", 
             response_model=PaginationResponse[QuizResponse])
 def list_quizzes(
     course_id: UUID,
     page: int = Query(1, ge=1, description="Page number"),
-    page_size: int = Query(10, ge=1, le=100,
+    page_size: int = Query(10, ge=1, le=100, 
                            description="Number of items per page"),
     db: Session = Depends(get_db),
-    _: AppUser = Depends(get_current_user),
+    current_user: AppUser = Depends(get_current_user),
+    # Đổi tên biến cho rõ nghĩa
 ):
     """
-    Lấy danh sách quiz trong 1 course (có phân trang).
+    Lấy danh sách quiz trong 1 course (có phân trang)
+    và trạng thái hoàn thành của người dùng hiện tại.
     """
+    # Truyền current_user.id vào service
     return quiz_service.list_quizzes(
-        db, course_id=course_id, page=page, page_size=page_size
+        db,
+        course_id=course_id,
+        user_id=current_user.id,
+        page=page,
+        page_size=page_size
     )
 
 

@@ -24,6 +24,23 @@ def list_courses(
     return service.list_courses(db, page=page, page_size=page_size)
 
 
+@router.get("/", response_model=PaginationResponse[CourseOut])
+@router.get("/enrolled", response_model=PaginationResponse[CourseOut])
+def list_enrolled_courses(
+    page: int = Query(1, ge=1, description="Page number"),
+    page_size: int = Query(
+        10, ge=1, le=100, description="Number of items per page"),
+    db: Session = Depends(get_db),
+    user: AppUser = Depends(get_current_user),
+):
+    if not user:
+        raise HTTPException(status_code=401, detail="Authentication required")
+
+    return service.list_enrolled_courses(
+        db, page=page, page_size=page_size, user_id=user.id
+    )
+
+
 @router.get("/{course_id}", response_model=CourseOut)
 def get_course(
     course_id: UUID,

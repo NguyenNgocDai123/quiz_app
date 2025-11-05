@@ -22,10 +22,17 @@ def get_course_by_id(db: Session, course_id: UUID):
     return db.query(Course).filter(Course.id == course_id).first()
 
 
+def get_enrolled_courses(db: Session, user_id: UUID):
+    return (
+        db.query(Course)
+        .join(CourseEnrollment)
+        .filter(CourseEnrollment.user_id == user_id)
+    )
+
+
 def get_enrollment(
-        db: Session,
-        course_id: UUID,
-        user_id: UUID) -> CourseEnrollment | None:
+    db: Session, course_id: UUID, user_id: UUID
+) -> CourseEnrollment | None:
     return (
         db.query(CourseEnrollment)
         .filter(
@@ -37,7 +44,8 @@ def get_enrollment(
 
 
 def create_enrollment(
-        db: Session, enrollment: CourseEnrollment) -> CourseEnrollment:
+        db: Session, enrollment: CourseEnrollment
+) -> CourseEnrollment:
     db.add(enrollment)
     db.commit()
     db.refresh(enrollment)

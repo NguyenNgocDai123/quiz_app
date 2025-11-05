@@ -44,6 +44,45 @@ def list_courses(db: Session, page: int = 1, page_size: int = 10):
     }
 
 
+def list_enrolled_courses(
+        db: Session, page: int = 1, page_size: int = 10, user_id: UUID = None):
+
+    if not user_id:
+        raise ValueError("User ID is required for enrolled courses")
+    
+    # Lấy query courses mà user đã enroll
+    query = repo.get_enrolled_courses(db, user_id)
+    total_items = query.count()
+    total_page = (total_items + page_size - 1) // page_size
+    offset = (page - 1) * page_size
+    courses = query.offset(offset).limit(page_size).all()
+
+    # Chuyển sang CourseOut có thêm member_count & quiz_count
+    course_list = []
+    for c in courses:
+        course_list.append(
+            CourseOut(
+                id=c.id,
+                name=c.name,
+                code=c.code,
+                teacher_id=c.teacher_id,
+                created_at=c.created_at,
+                member_count=len(c.enrollments) if hasattr(
+                    c, "enrollments") else 0,
+                quiz_count=len(c.quizzes) if hasattr(c, "quizzes") else 0,
+            )
+        )
+
+    return {
+        "page": page,
+        "page_size": page_size,
+        "total_page": total_page,
+        "total_items": total_items,
+        "next": page + 1 if page < total_page else None,
+        "data": course_list,
+    }
+
+
 def get_course(db: Session, course_id: UUID):
     return repo.get_course_by_id(db, course_id)
 

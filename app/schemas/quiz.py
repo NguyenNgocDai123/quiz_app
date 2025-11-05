@@ -32,6 +32,7 @@ class QuizUpdate(BaseModel):
 class QuizResponse(QuizBase):
     id: UUID
     created_at: datetime
+    finished_at: Optional[datetime] = None
 
     class Config:
         from_attributes = True
