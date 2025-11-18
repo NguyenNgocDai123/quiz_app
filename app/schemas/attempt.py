@@ -18,7 +18,7 @@ class QuizAttemptResponse(BaseModel):
     user_id: UUID
     quiz_id: UUID
     attempt_number: int
-    score: int | None
+    score: float | None    # ✅ score có thể là float (thang 10)
     started_at: datetime
     finished_at: datetime | None
 
@@ -39,4 +39,6 @@ class QuizAttemptAnswerResponse(BaseModel):
 
 
 class QuizAttemptDetailResponse(QuizAttemptResponse):
+    total_questions: int          # ✅ tổng số câu hỏi
+    correct_count: int            # ✅ số câu đúng
     answers: list[QuizAttemptAnswerResponse] = []

@@ -24,7 +24,6 @@ def list_courses(
     return service.list_courses(db, page=page, page_size=page_size)
 
 
-@router.get("/", response_model=PaginationResponse[CourseOut])
 @router.get("/enrolled", response_model=PaginationResponse[CourseOut])
 def list_enrolled_courses(
     page: int = Query(1, ge=1, description="Page number"),
@@ -97,3 +96,18 @@ def delete_course(
     if not success:
         raise HTTPException(status_code=404, detail="Course not found")
     return {"message": "Course deleted successfully"}
+
+
+@router.delete("/{course_id}/kick/{student_id}")
+def remove_student_from_course(
+    course_id: str,
+    student_id: str,
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user)
+):
+    return service.kick_student_from_course(
+        db=db,
+        teacher_id=str(current_user.id),
+        course_id=course_id,
+        student_id=student_id,
+    )

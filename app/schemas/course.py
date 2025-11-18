@@ -23,8 +23,8 @@ class CourseUpdate(BaseModel):
 class CourseOut(CourseBase):
     id: UUID
     created_at: datetime
-    member_count: int
-    quiz_count: int
+    member_count: int | None = None
+    quiz_count: int | None = None
 
     class Config:
         orm_mode = True

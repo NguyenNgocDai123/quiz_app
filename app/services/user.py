@@ -1,4 +1,5 @@
 from sqlalchemy.orm import Session
+from math import ceil
 from uuid import UUID
 from app.models.models import AppUser
 import app.repositories.user
@@ -22,6 +23,29 @@ def get_all_users_service(db: Session, page: int = 1, page_size: int = 10):
         "total_items": total_items,
         "next": page + 1 if page < total_page else None,
         "data": items
+    }
+
+
+def get_all_users_in_course(
+    db: Session,
+    course_id: str,
+    page: int = 1,
+    page_size: int = 10
+):
+    query = app.repositories.user.get_users_in_course(db, course_id)
+    total_items = query.count()
+    total_page = ceil(total_items / page_size)
+    offset = (page - 1) * page_size
+
+    users = query.offset(offset).limit(page_size).all()
+
+    return {
+        "page": page,
+        "page_size": page_size,
+        "total_page": total_page,
+        "total_items": total_items,
+        "next": page + 1 if page < total_page else None,
+        "data": users
     }
 
 

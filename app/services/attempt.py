@@ -3,7 +3,7 @@ from uuid import UUID
 from datetime import datetime
 from fastapi import HTTPException
 
-from app.models.models import QuizAttempt, QuizAttemptAnswer
+from app.models.models import QuizAttempt, QuizAttemptAnswer, QuizQuestion
 from app.schemas.attempt import QuizAttemptCreate, QuizAttemptAnswerCreate
 from app.repositories import attempt as repo
 
@@ -30,7 +30,7 @@ def submit_attempt(
     attempt_id: UUID,
     answers: list[QuizAttemptAnswerCreate],
     db: Session
-) -> QuizAttempt:
+) -> dict:
     attempt = repo.get_attempt(db, attempt_id)
     if not attempt:
         raise HTTPException(status_code=404, detail="Attempt not found")
@@ -40,7 +40,17 @@ def submit_attempt(
             status_code=400, detail="Attempt already submitted"
         )
 
-    total_score = 0
+    # ✅ Lấy danh sách câu hỏi của quiz
+    all_questions = (
+        db.query(QuizQuestion)
+        .filter(QuizQuestion.quiz_id == attempt.quiz_id)
+        .all()
+    )
+    total_questions = len(all_questions)
+
+    correct_count = 0
+
+    # ✅ Chấm điểm từng câu
     for ans in answers:
         question = repo.get_question(db, ans.question_id)
         if not question:
@@ -48,31 +58,86 @@ def submit_attempt(
 
         option = repo.get_option(db, ans.option_id) if ans.option_id else None
         is_correct = option.is_correct if option else False
-        score = 1 if is_correct else 0
-        total_score += score
+
+        if is_correct:
+            correct_count += 1
 
         attempt_answer = QuizAttemptAnswer(
             attempt_id=attempt.id,
             question_id=ans.question_id,
             option_id=ans.option_id,
             is_correct=is_correct,
-            score=score,
+            score=1 if is_correct else 0,
         )
         repo.save_answer(db, attempt_answer)
 
-    attempt.score = total_score
+    # ✅ Tính điểm theo thang 10
+    score = (correct_count / total_questions) * 10
+
+    # ✅ Làm tròn 1 chữ số thập phân (tuỳ bạn)
+    score = round(score, 1)
+
+    attempt.score = score
     attempt.finished_at = datetime.utcnow()
+
     repo.commit(db)
     db.refresh(attempt)
 
-    return attempt
+    # ✅ Trả về đầy đủ dữ liệu
+    return {
+        "id": attempt.id,
+        "quiz_id": attempt.quiz_id,
+        "user_id": attempt.user_id,
+        "attempt_number": attempt.attempt_number,
+        "score": attempt.score,
+        "correct_count": correct_count,
+        "total_questions": total_questions,
+        "started_at": attempt.started_at,
+        "finished_at": attempt.finished_at,
+        "answers": attempt.answers,
+    }
 
 
-def get_attempt(attempt_id: UUID, db: Session) -> QuizAttempt:
+def get_attempt(attempt_id: UUID, db: Session) -> dict:
     attempt = repo.get_attempt(db, attempt_id)
     if not attempt:
         raise HTTPException(status_code=404, detail="Attempt not found")
-    return attempt
+
+    # ✅ Lấy danh sách câu hỏi thuộc quiz
+    all_questions = (
+        db.query(QuizQuestion)
+        .filter(QuizQuestion.quiz_id == attempt.quiz_id)
+        .all()
+    )
+    total_questions = len(all_questions)
+
+    # ✅ Đếm số câu đúng
+    correct_count = (
+        db.query(QuizAttemptAnswer)
+        .filter(
+            QuizAttemptAnswer.attempt_id == attempt_id,
+            QuizAttemptAnswer.is_correct == True
+        )
+        .count()
+    )
+
+    # ✅ Điểm (nếu attempt.score chưa tính)
+    score = attempt.score
+    if score is None:
+        score = round((correct_count / total_questions) * 10, 1)
+
+    return {
+        "id": attempt.id,
+        "quiz_id": attempt.quiz_id,
+        "user_id": attempt.user_id,
+        "attempt_number": attempt.attempt_number,
+        "score": score,
+        "correct_count": correct_count,
+        "total_questions": total_questions,
+        "started_at": attempt.started_at,
+        "finished_at": attempt.finished_at,
+        "answers": attempt.answers,
+    }
 
 
 def list_attempts(

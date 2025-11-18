@@ -159,3 +159,32 @@ def delete_course_service(db: Session, course_id: UUID):
     if not course:
         return None
     return repo.delete_course(db, course)
+
+
+def kick_student_from_course(
+    db: Session, teacher_id: str, course_id: str, student_id: str
+):
+    # 1. Lấy khóa học
+    course = repo.get_course_by_id(db, course_id)
+    if not course:
+        raise HTTPException(status_code=404, detail="Course not found")
+
+    # 2. Kiểm tra xem caller có phải là giáo viên khóa học
+    if str(course.teacher_id) != str(teacher_id):
+        raise HTTPException(
+            status_code=403,
+            detail="You are not allowed to remove students from this course"
+        )
+
+    # 3. Tìm enrollment
+    enrollment = repo.get_enrollment(db, course_id, student_id)
+    if not enrollment:
+        raise HTTPException(
+            status_code=400,
+            detail="Student is not enrolled in this course"
+        )
+
+    # 4. Xóa enrollment
+    repo.delete_enrollment(db, enrollment)
+
+    return {"message": "Student removed successfully"}

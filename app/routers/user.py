@@ -26,6 +26,22 @@ def get_all_users(
         db, page=page, page_size=page_size)
 
 
+@router.get(
+    "/courses/{course_id}/users",
+    response_model=PaginationResponse[app.schemas.user.UserOut]
+)
+def list_users_in_course(
+    course_id: str,
+    page: int = Query(1, ge=1, description="Page number"),
+    page_size: int = Query(10, ge=1, le=100, description="Items per page"),
+    db: Session = Depends(get_db),
+    _: AppUser = Depends(get_current_user)  # optional auth
+):
+    return app.services.user.get_all_users_in_course(
+        db, course_id=course_id, page=page, page_size=page_size
+    )
+
+
 @router.get("/me", response_model=app.schemas.user.UserResponse)
 def get_my_info(
     current_user: AppUser = Depends(get_current_user),

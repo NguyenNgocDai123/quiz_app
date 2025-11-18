@@ -1,11 +1,19 @@
 from sqlalchemy.orm import Session
-from app.models.models import AppUser
+from app.models.models import AppUser, CourseEnrollment
 from uuid import UUID
 
 
 def get_all_users(db: Session):
     # Trả về query, chưa gọi .all()
     return db.query(AppUser)
+
+
+def get_users_in_course(db: Session, course_id: str):
+    return (
+        db.query(AppUser)
+        .join(CourseEnrollment, CourseEnrollment.user_id == AppUser.id)
+        .filter(CourseEnrollment.course_id == course_id)
+    )
 
 
 def get_user_by_id(db: Session, user_id: UUID):

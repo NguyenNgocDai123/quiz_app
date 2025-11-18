@@ -39,7 +39,7 @@ class QuizResponse(QuizBase):
 
 
 class QuestionOptionCreate(BaseModel):
-    id: UUID
+    id: Optional[UUID] = None
     content: str
     is_correct: bool = False
 

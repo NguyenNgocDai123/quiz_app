@@ -4,6 +4,7 @@ from app.models.models import Course
 from app.schemas.course import CourseCreate, CourseUpdate
 from uuid import UUID
 from app.models.models import CourseEnrollment
+from app.models.models import CourseQuiz
 
 
 def get_course_by_name(db: Session, name: str):
@@ -15,7 +16,7 @@ def get_course_by_code(db: Session, code: str):
 
 
 def get_courses(db: Session):
-    return db.query(Course)
+    return db.query(Course).order_by(Course.created_at.desc())
 
 
 def get_course_by_id(db: Session, course_id: UUID):
@@ -53,7 +54,7 @@ def create_enrollment(
 
 
 def create_course(db: Session, course_in: CourseCreate):
-    course = Course(**course_in.dict())
+    course = Course(**course_in.model_dump())
     db.add(course)
     db.commit()
     db.refresh(course)
@@ -61,14 +62,33 @@ def create_course(db: Session, course_in: CourseCreate):
 
 
 def update_course(db: Session, course: Course, course_in: CourseUpdate):
-    for field, value in course_in.dict(exclude_unset=True).items():
+    for field, value in course_in.model_dump(exclude_unset=True).items():
         setattr(course, field, value)
     db.commit()
     db.refresh(course)
     return course
 
 
-def delete_course(db: Session, course: Course):
+def delete_course(db: Session, course: Course) -> bool:
+    """
+    Xóa course và tất cả dữ liệu liên quan: quizzes, enrollments
+    """
+
+    # Xóa tất cả enrollment liên quan
+    db.query(CourseEnrollment).filter(
+        CourseEnrollment.course_id == course.id).delete(
+            synchronize_session=False)
+
+    # Xóa tất cả quiz liên quan
+    db.query(CourseQuiz).filter(
+        CourseQuiz.course_id == course.id).delete(synchronize_session=False)
+
+    # Xóa course
     db.delete(course)
     db.commit()
     return True
+
+
+def delete_enrollment(db: Session, enrollment: CourseEnrollment):
+    db.delete(enrollment)
+    db.commit()
