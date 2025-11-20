@@ -59,3 +59,15 @@ def list_attempts(
     if quiz_id:
         query = query.filter(QuizAttempt.quiz_id == quiz_id)
     return query
+
+
+def get_attempts_by_quiz(db: Session, quiz_id: str):
+    """
+    Lấy tất cả QuizAttempt theo quiz_id, order theo user_id và attempt_number
+    """
+    return (
+        db.query(QuizAttempt)
+        .filter(QuizAttempt.quiz_id == quiz_id)
+        .order_by(QuizAttempt.user_id, QuizAttempt.attempt_number)
+        .all()
+    )

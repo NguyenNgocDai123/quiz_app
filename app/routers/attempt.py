@@ -8,14 +8,34 @@ from app.schemas.attempt import (
     QuizAttemptAnswerCreate,
     QuizAttemptResponse,
     QuizAttemptDetailResponse,
+    QuizAttemptByUser,
 )
 from app.services import attempt as service
 from app.dependencies.dependencies import get_current_user
 from app.models.models import AppUser
-from app.common.pagination import PaginationResponse
+from app.common.pagination import PaginationResponse, PaginationRequest
 
 
 router = APIRouter(prefix="/attempts", tags=["Attempts"])
+
+
+@router.get("/by_quiz/{quiz_id}",
+            response_model=PaginationResponse[QuizAttemptByUser])
+def get_quiz_attempts_by_quiz(
+    quiz_id: str,
+    page: int = Query(1, ge=1),
+    page_size: int = Query(10, ge=1, le=100),
+    db: Session = Depends(get_db),
+    _: AppUser = Depends(get_current_user),
+):
+    """
+    Lấy danh sách học sinh có phân trang,
+    kèm tất cả lần làm bài của từng học sinh
+    """
+    pagination = PaginationRequest(page=page, page_size=page_size)
+    return service.get_attempts_grouped_by_user_paginated(
+        db, quiz_id, pagination
+    )
 
 
 @router.post("/", response_model=QuizAttemptResponse)

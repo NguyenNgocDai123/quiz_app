@@ -33,6 +33,9 @@ class QuizResponse(QuizBase):
     id: UUID
     created_at: datetime
     finished_at: Optional[datetime] = None
+    attempt_count: Optional[int] = 0
+    remaining_attempts: Optional[int] = 0
+    latest_attempt_finished_at: Optional[datetime] = None
 
     class Config:
         from_attributes = True

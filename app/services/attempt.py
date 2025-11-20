@@ -4,8 +4,16 @@ from datetime import datetime
 from fastapi import HTTPException
 
 from app.models.models import QuizAttempt, QuizAttemptAnswer, QuizQuestion
-from app.schemas.attempt import QuizAttemptCreate, QuizAttemptAnswerCreate
+from app.schemas.attempt import (
+    QuizAttemptCreate,
+    QuizAttemptAnswerCreate,
+    QuizAttemptByUser,
+    QuizAttemptItem,
+)
 from app.repositories import attempt as repo
+from collections import defaultdict
+from math import ceil
+from app.common.pagination import PaginationResponse, PaginationRequest
 
 
 def start_attempt(payload: QuizAttemptCreate, db: Session) -> QuizAttempt:
@@ -116,7 +124,7 @@ def get_attempt(attempt_id: UUID, db: Session) -> dict:
         db.query(QuizAttemptAnswer)
         .filter(
             QuizAttemptAnswer.attempt_id == attempt_id,
-            QuizAttemptAnswer.is_correct == True
+            QuizAttemptAnswer.is_correct.is_(True)
         )
         .count()
     )
@@ -161,3 +169,57 @@ def list_attempts(
         "next": page + 1 if page < total_page else None,
         "data": items
     }
+
+
+def get_attempts_grouped_by_user_paginated(
+    db: Session,
+    quiz_id: str,
+    pagination: PaginationRequest
+) -> PaginationResponse[QuizAttemptByUser]:
+    attempts = repo.get_attempts_by_quiz(db, quiz_id)
+
+    # Group theo user
+    grouped = defaultdict(list)
+    user_names = {}
+    for attempt in attempts:
+        finished_at = (
+            attempt.finished_at.isoformat() if attempt.finished_at else None
+        )
+        grouped[attempt.user_id].append(
+            QuizAttemptItem(
+                attempt_id=str(attempt.id),
+                attempt_number=attempt.attempt_number,
+                score=attempt.score,
+                started_at=attempt.started_at.isoformat(),
+                finished_at=finished_at,
+            )
+        )
+        user_names[attempt.user_id] = (
+            attempt.user.full_name if attempt.user else "Unknown"
+        )
+
+    all_users = [
+        QuizAttemptByUser(
+            user_id=str(user_id),
+            user_name=user_names[user_id],
+            attempts=attempt_list
+        )
+        for user_id, attempt_list in grouped.items()
+    ]
+
+    # Pagination
+    total_items = len(all_users)
+    total_page = ceil(total_items / pagination.page_size)
+    start = (pagination.page - 1) * pagination.page_size
+    end = start + pagination.page_size
+    data = all_users[start:end]
+    next_page = pagination.page + 1 if pagination.page < total_page else None
+
+    return PaginationResponse(
+        page=pagination.page,
+        page_size=pagination.page_size,
+        total_items=total_items,
+        total_page=total_page,
+        next=next_page,
+        data=data
+    )

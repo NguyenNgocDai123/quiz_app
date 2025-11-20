@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 from uuid import UUID
 from datetime import datetime
+from typing import List
 
 
 class QuizAttemptCreate(BaseModel):
@@ -42,3 +43,23 @@ class QuizAttemptDetailResponse(QuizAttemptResponse):
     total_questions: int          # ✅ tổng số câu hỏi
     correct_count: int            # ✅ số câu đúng
     answers: list[QuizAttemptAnswerResponse] = []
+
+
+class QuizAttemptItem(BaseModel):
+    attempt_id: str
+    attempt_number: int
+    score: int | None
+    started_at: str
+    finished_at: str | None
+
+    class Config:
+        orm_mode = True
+
+
+class QuizAttemptByUser(BaseModel):
+    user_id: str
+    user_name: str
+    attempts: List[QuizAttemptItem]
+
+    class Config:
+        orm_mode = True

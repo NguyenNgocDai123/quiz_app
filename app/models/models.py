@@ -79,8 +79,8 @@ class CourseQuiz(Base):
     title = Column(String(255), nullable=False)
     description = Column(Text)
     course_id = Column(
-        UUID(as_uuid=True), ForeignKey("courses.id", ondelete="CASCADE"),
-        nullable=False
+        UUID(as_uuid=True), ForeignKey(
+            "courses.id", ondelete="CASCADE"), nullable=False
     )
     teacher_id = Column(
         UUID(as_uuid=True), ForeignKey("app_users.id", ondelete="SET NULL")
@@ -92,9 +92,20 @@ class CourseQuiz(Base):
     created_at = Column(TIMESTAMP, default=datetime.utcnow, nullable=False)
 
     course = relationship("Course", back_populates="quizzes")
-    teacher = relationship("AppUser")
-    questions = relationship("QuizQuestion", back_populates="quiz")
-    attempts = relationship("QuizAttempt", back_populates="quiz")
+
+    # ⬇️ Thêm cascade khi xóa quiz → xóa hết questions + attempts
+    questions = relationship(
+        "QuizQuestion",
+        back_populates="quiz",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+    )
+    attempts = relationship(
+        "QuizAttempt",
+        back_populates="quiz",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+    )
 
 
 # Quiz Questions
@@ -115,8 +126,20 @@ class QuizQuestion(Base):
     points = Column(Integer, nullable=False)
 
     quiz = relationship("CourseQuiz", back_populates="questions")
-    options = relationship("QuestionOption", back_populates="question")
-    answers = relationship("QuizAttemptAnswer", back_populates="question")
+
+    # ⬇️ Xóa question → xóa tất cả options + attempt answers
+    options = relationship(
+        "QuestionOption",
+        back_populates="question",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+    )
+    answers = relationship(
+        "QuizAttemptAnswer",
+        back_populates="question",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+    )
 
 
 # Question Options
@@ -133,7 +156,14 @@ class QuestionOption(Base):
     is_correct = Column(Boolean, default=False, nullable=False)
 
     question = relationship("QuizQuestion", back_populates="options")
-    answers = relationship("QuizAttemptAnswer", back_populates="option")
+
+    # Xóa option → xóa tất cả answer chọn option này
+    answers = relationship(
+        "QuizAttemptAnswer",
+        back_populates="option",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+    )
 
 
 # Quiz Attempts
@@ -142,9 +172,8 @@ class QuizAttempt(Base):
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     user_id = Column(
-        UUID(as_uuid=True),
-        ForeignKey("app_users.id", ondelete="CASCADE"),
-        nullable=False,
+        UUID(as_uuid=True), ForeignKey(
+            "app_users.id", ondelete="CASCADE"), nullable=False
     )
     quiz_id = Column(
         UUID(as_uuid=True),
@@ -158,7 +187,14 @@ class QuizAttempt(Base):
 
     user = relationship("AppUser", back_populates="quiz_attempts")
     quiz = relationship("CourseQuiz", back_populates="attempts")
-    answers = relationship("QuizAttemptAnswer", back_populates="attempt")
+
+    # ⬇️ Xóa attempt → xóa tất cả answers
+    answers = relationship(
+        "QuizAttemptAnswer",
+        back_populates="attempt",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+    )
 
 
 # Quiz Attempt Answers

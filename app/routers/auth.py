@@ -29,7 +29,7 @@ def login(
         httponly=True,
         secure=False,  # ⚠️ Đặt True khi chạy HTTPS
         samesite="lax",
-        max_age=60 * 15,  # 15 phút (giống exp access_token)
+        max_age=60 * 60 * 24 * 1,  # 15 phút (giống exp access_token)
     )
     response.set_cookie(
         key="refresh_token",
